@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Detector de Manos - Compatible</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            text-align: center;
+            background-color: #f0f0f0;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        #videoContainer {
+            position: relative;
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 640px;
+            background-color: #000;
+        }
+        #output_canvas {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+        video {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        button {
+            padding: 15px 25px;
+            margin: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        button:disabled {
+            background-color: #cccccc;
+        }
+        #status {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #e9e9e9;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 640px;
+            box-sizing: border-box;
+        }
+        #compatibilityCheck {
+            margin: 15px 0;
+            padding: 15px;
+            background-color: #ffdddd;
+            border-radius: 5px;
+            border: 1px solid #ff0000;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Detector de Manos</h1>
+
+    <div id="compatibilityCheck">
+        <h2>Problemas de compatibilidad detectados</h2>
+        <p id="compatibilityMessage"></p>
+        <div id="browserInfo"></div>
+    </div>
+
+    <div class="container">
+        <div id="videoContainer">
+            <video id="webcam" playsinline autoplay muted></video>
+            <canvas id="output_canvas"></canvas>
+        </div>
+        
+        <div id="status">Verificando compatibilidad del navegador...</div>
+        
+        <div>
+            <button id="startBtn" disabled>Iniciar Cámara</button>
+            <button id="stopBtn" disabled>Detener</button>
+        </div>
+    </div>
+
+    <!-- Importar MediaPipe desde CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/hands.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3/drawing_utils.min.js"></script>
+
+    <script>
+        // Elementos DOM
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('output_canvas');
+        const ctx = canvas.getContext('2d');
+        const statusDiv = document.getElementById('status');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const videoContainer = document.getElementById('videoContainer');
+        const compatibilityCheck = document.getElementById('compatibilityCheck');
+        const compatibilityMessage = document.getElementById('compatibilityMessage');
+        const browserInfo = document.getElementById('browserInfo');
+
+        // Variables globales
+        let hands;
+        let camera;
+        let stream;
+        let isRunning = false;
+        let isCompatible = false;
+        
+        // Verificar compatibilidad del navegador
+        function checkCompatibility() {
+            const info = [];
+            
+            // Recopilar información del navegador
+            info.push(`Navegador: ${navigator.userAgent}`);
+            
+            // Comprobar si el navegador soporta getUserMedia
+            let hasGetUserMedia = false;
+            
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                hasGetUserMedia = true;
+                info.push("✅ navigator.mediaDevices.getUserMedia está disponible");
+            } else {
+                info.push("❌ navigator.mediaDevices.getUserMedia NO está disponible");
+                
+                // Verificar alternativas antiguas
+                if (navigator.getUserMedia) {
+                    info.push("✅ navigator.getUserMedia está disponible (método obsoleto)");
+                    hasGetUserMedia = true;
+                } else if (navigator.webkitGetUserMedia || navigator.mozGetUserMedia) {
+                    info.push("✅ Método alternativo de getUserMedia disponible (webkit/moz)");
+                    hasGetUserMedia = true;
+                    
+                    // Crear polyfill
+                    navigator.getUserMedia = navigator.getUserMedia || 
+                                             navigator.webkitGetUserMedia || 
+                                             navigator.mozGetUserMedia;
+                } else {
+                    info.push("❌ No se encontraron alternativas para getUserMedia");
+                }
+            }
+            
+            // Verificar si Canvas está disponible
+            const hasCanvas = !!window.CanvasRenderingContext2D;
+            info.push(hasCanvas ? "✅ Canvas está disponible" : "❌ Canvas NO está disponible");
+            
+            // Verificar si las bibliotecas de MediaPipe están cargadas
+            const hasMediaPipe = (typeof Hands !== 'undefined') && (typeof Camera !== 'undefined');
+            info.push(hasMediaPipe ? "✅ MediaPipe está cargado" : "❌ MediaPipe NO está cargado");
+            
+            // Determinar compatibilidad general
+            isCompatible = hasGetUserMedia && hasCanvas && hasMediaPipe;
+            
+            // Mostrar resultados
+            browserInfo.innerHTML = info.map(item => `<div>${item}</div>`).join('');
+            
+            if (!isCompatible) {
+                compatibilityCheck.style.display = 'block';
+                
+                let message = "Tu navegador no es totalmente compatible con esta aplicación. ";
+                
+                if (!hasGetUserMedia) {
+                    message += "No se puede acceder a la cámara. ";
+                }
+                
+                if (!hasMediaPipe) {
+                    message += "No se pudieron cargar las bibliotecas necesarias. ";
+                }
+                
+                message += "Recomendaciones:<br>1. Usa un navegador moderno como Chrome o Firefox<br>2. Accede a través de HTTPS<br>3. Concede permisos de cámara cuando se soliciten";
+                
+                compatibilityMessage.innerHTML = message;
+                statusDiv.textContent = "Tu navegador no es compatible";
+            } else {
+                setupHands();
+            }
+            
+            return isCompatible;
+        }
+        
+        // Configurar canvas
+        function setupCanvas() {
+            // Hacer que el canvas tenga el mismo tamaño que el contenedor de video
+            const containerWidth = videoContainer.clientWidth;
+            const containerHeight = Math.floor(containerWidth * 0.75); // Mantener relación 4:3
+            
+            videoContainer.style.height = `${containerHeight}px`;
+            
+            canvas.width = containerWidth;
+            canvas.height = containerHeight;
+            
+            statusDiv.textContent = `Canvas configurado: ${canvas.width}x${canvas.height}`;
+        }
+        
+        // Inicializar MediaPipe Hands
+        function setupHands() {
+            try {
+                statusDiv.textContent = "Cargando modelo...";
+                
+                hands = new Hands({
+                    locateFile: (file) => {
+                        return `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/${file}`;
+                    }
+                });
+                
+                hands.setOptions({
+                    maxNumHands: 2,
+                    modelComplexity: 1,
+                    minDetectionConfidence: 0.5,
+                    minTrackingConfidence: 0.5
+                });
+                
+                hands.onResults(onResults);
+                
+                // Configurar tamaño del canvas
+                setupCanvas();
+                
+                statusDiv.textContent = "Modelo cargado. Presiona 'Iniciar Cámara'";
+                startBtn.disabled = false;
+            } catch (error) {
+                statusDiv.textContent = `Error al cargar modelo: ${error.message}`;
+                console.error(error);
+            }
+        }
+        
+        // Procesar resultados de MediaPipe
+        function onResults(results) {
+            if (!isRunning) return;
+            
+            // Limpiar el canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Verificar si se detectaron manos
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                statusDiv.textContent = `Detectadas ${results.multiHandLandmarks.length} mano(s)`;
+                
+                // Procesar cada mano
+                for (let i = 0; i < results.multiHandLandmarks.length; i++) {
+                    const landmarks = results.multiHandLandmarks[i];
+                    
+                    // Dibujar líneas entre los puntos
+                    const connections = [
+                        // Pulgar
+                        [0, 1], [1, 2], [2, 3], [3, 4],
+                        // Índice
+                        [0, 5], [5, 6], [6, 7], [7, 8],
+                        // Medio
+                        [0, 9], [9, 10], [10, 11], [11, 12],
+                        // Anular
+                        [0, 13], [13, 14], [14, 15], [15, 16],
+                        // Meñique
+                        [0, 17], [17, 18], [18, 19], [19, 20],
+                        // Palma
+                        [0, 5], [5, 9], [9, 13], [13, 17], [0, 17]
+                    ];
+                    
+                    // Dibujar las conexiones (líneas)
+                    for (const [start, end] of connections) {
+                        ctx.beginPath();
+                        const startX = landmarks[start].x * canvas.width;
+                        const startY = landmarks[start].y * canvas.height;
+                        const endX = landmarks[end].x * canvas.width;
+                        const endY = landmarks[end].y * canvas.height;
+                        
+                        ctx.moveTo(startX, startY);
+                        ctx.lineTo(endX, endY);
+                        ctx.strokeStyle = 'white';
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                    }
+                    
+                    // Dibujar los puntos
+                    for (let j = 0; j < landmarks.length; j++) {
+                        const x = landmarks[j].x * canvas.width;
+                        const y = landmarks[j].y * canvas.height;
+                        
+                        // Las puntas de los dedos tienen círculos más grandes
+                        const isFingertip = [4, 8, 12, 16, 20].includes(j);
+                        const radius = isFingertip ? 10 : 5;
+                        
+                        // Punto central (centro de la palma) con diamante
+                        if (j === 0) {
+                            // Dibujar un diamante en el centro de la palma
+                            ctx.beginPath();
+                            ctx.moveTo(x, y - 10); // Arriba
+                            ctx.lineTo(x + 10, y); // Derecha
+                            ctx.lineTo(x, y + 10); // Abajo
+                            ctx.lineTo(x - 10, y); // Izquierda
+                            ctx.closePath();
+                            ctx.strokeStyle = 'white';
+                            ctx.lineWidth = 2;
+                            ctx.stroke();
+                        } 
+                        // Puntos en las articulaciones
+                        else if (!isFingertip) {
+                            // Dibujar un pequeño círculo con cruz
+                            ctx.beginPath();
+                            ctx.arc(x, y, 5, 0, 2 * Math.PI);
+                            ctx.strokeStyle = 'white';
+                            ctx.lineWidth = 1;
+                            ctx.stroke();
+                            
+                            // Dibujar una cruz en el centro
+                            ctx.beginPath();
+                            ctx.moveTo(x - 3, y);
+                            ctx.lineTo(x + 3, y);
+                            ctx.moveTo(x, y - 3);
+                            ctx.lineTo(x, y + 3);
+                            ctx.strokeStyle = 'white';
+                            ctx.lineWidth = 1;
+                            ctx.stroke();
+                        } 
+                        // Puntas de los dedos
+                        else {
+                            // Dibujar círculos brillantes en las puntas de los dedos
+                            ctx.beginPath();
+                            ctx.arc(x, y, radius + 3, 0, 2 * Math.PI);
+                            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                            ctx.fill();
+                            
+                            ctx.beginPath();
+                            ctx.arc(x, y, radius, 0, 2 * Math.PI);
+                            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                            ctx.fill();
+                            
+                            ctx.beginPath();
+                            ctx.arc(x, y, radius - 3, 0, 2 * Math.PI);
+                            ctx.fillStyle = 'white';
+                            ctx.fill();
+                        }
+                    }
+                    
+                    // Mostrar etiqueta de mano (izquierda/derecha)
+                    const handedness = results.multiHandedness[i].label;
+                    const wristX = landmarks[0].x * canvas.width;
+                    const wristY = landmarks[0].y * canvas.height;
+                    
+                    ctx.font = '16px Arial';
+                    ctx.fillStyle = 'white';
+                    ctx.fillText(handedness, wristX - 20, wristY - 20);
+                }
+            } else {
+                statusDiv.textContent = "No se detectaron manos";
+            }
+        }
+        
+        // Iniciar cámara usando Camera de MediaPipe (compatible)
+        function startCameraWithMediaPipe() {
+            try {
+                statusDiv.textContent = "Iniciando cámara con MediaPipe...";
+                
+                // Inicializar la cámara con la biblioteca Camera de MediaPipe
+                camera = new Camera(video, {
+                    onFrame: async () => {
+                        if (isRunning) {
+                            await hands.send({image: video});
+                        }
+                    },
+                    width: 640,
+                    height: 480
+                });
+                
+                // Iniciar la cámara
+                camera.start().then(() => {
+                    statusDiv.textContent = "Cámara iniciada. Muestra tus manos.";
+                    isRunning = true;
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                }).catch(error => {
+                    statusDiv.textContent = `Error al iniciar cámara: ${error.message}`;
+                    console.error(error);
+                });
+            } catch (error) {
+                statusDiv.textContent = `Error al acceder a la cámara: ${error.message}`;
+                console.error(error);
+            }
+        }
+        
+        // Iniciar cámara directamente (menos compatible)
+        function startCameraDirect() {
+            try {
+                statusDiv.textContent = "Iniciando cámara directamente...";
+                
+                // Determinar qué método de getUserMedia usar
+                const getUserMedia = navigator.mediaDevices?.getUserMedia || 
+                                     navigator.getUserMedia ||
+                                     navigator.webkitGetUserMedia || 
+                                     navigator.mozGetUserMedia;
+                
+                if (!getUserMedia) {
+                    throw new Error("No se encontró método getUserMedia compatible");
+                }
+                
+                // Configuración de la cámara
+                const constraints = {
+                    video: {
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    },
+                    audio: false
+                };
+                
+                // Para el método antiguo
+                const handleSuccess = (mediaStream) => {
+                    stream = mediaStream;
+                    video.srcObject = mediaStream;
+                    
+                    // Configurar un bucle para procesar frames
+                    const processFrame = async () => {
+                        if (isRunning) {
+                            await hands.send({image: video});
+                            requestAnimationFrame(processFrame);
+                        }
+                    };
+                    
+                    video.onloadedmetadata = () => {
+                        video.play();
+                        isRunning = true;
+                        startBtn.disabled = true;
+                        stopBtn.disabled = false;
+                        statusDiv.textContent = "Cámara iniciada. Muestra tus manos.";
+                        processFrame();
+                    };
+                };
+                
+                const handleError = (error) => {
+                    statusDiv.textContent = `Error: ${error.name}`;
+                    console.error(error);
+                };
+                
+                // Usar el método apropiado
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    navigator.mediaDevices.getUserMedia(constraints)
+                        .then(handleSuccess)
+                        .catch(handleError);
+                } else {
+                    // Método antiguo
+                    getUserMedia.call(navigator, constraints, handleSuccess, handleError);
+                }
+                
+            } catch (error) {
+                statusDiv.textContent = `Error al acceder a la cámara: ${error.message}`;
+                console.error(error);
+            }
+        }
+        
+        // Iniciar cámara (intentar ambos métodos)
+        function startCamera() {
+            // Primero intentar con MediaPipe Camera
+            if (typeof Camera !== 'undefined') {
+                try {
+                    startCameraWithMediaPipe();
+                    return;
+                } catch (e) {
+                    console.log("Error al usar Camera de MediaPipe, intentando método directo", e);
+                }
+            }
+            
+            // Si falla, intentar método directo
+            startCameraDirect();
+        }
+        
+        // Detener cámara
+        function stopCamera() {
+            isRunning = false;
+            
+            // Detener cámara de MediaPipe si existe
+            if (camera) {
+                camera.stop();
+            }
+            
+            // Detener streams directos si existen
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+            }
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            statusDiv.textContent = "Cámara detenida";
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+        }
+        
+        // Eventos de botones
+        startBtn.addEventListener('click', startCamera);
+        stopBtn.addEventListener('click', stopCamera);
+        
+        // Manejar cambios de tamaño de pantalla
+        window.addEventListener('resize', setupCanvas);
+        
+        // Inicializar al cargar la página
+        window.addEventListener('load', checkCompatibility);
+    </script>
+</body>
+</html>
