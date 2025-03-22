@@ -84,10 +84,14 @@ const CameraManager = {
                 UI.updateButtonStates(true, this.videoDevices);
                 HandDetector.resetFpsCounter();
                 
-                // Sincronizar el segundo video si estamos en modo VR
-                if (AppConfig.vrMode && this.stream) {
-                    AppConfig.elements.video2.srcObject = this.stream;
-                    AppConfig.elements.video2.play();
+                // Re-ajustar el canvas cuando la cámara esté lista
+                setTimeout(() => {
+                    UI.setupCanvas();
+                }, 300);
+                
+                // Si estamos en modo VR, asegurarnos de configurar el segundo video
+                if (AppConfig.vrMode) {
+                    this.setupVRVideoStream();
                 }
             }).catch(error => {
                 UI.updateStatus(`Error con MediaPipe Camera: ${error.message}`);
@@ -100,6 +104,41 @@ const CameraManager = {
             console.error(error);
             // Si falla, intentar método directo
             this.startCameraDirect();
+        }
+    },
+    
+    /**
+     * Configura el stream de video para el modo VR
+     */
+    setupVRVideoStream() {
+        const { video, video2 } = AppConfig.elements;
+        
+        console.log("Configurando stream para modo VR");
+        
+        // Si no tenemos el stream directamente (usando Camera API de MediaPipe)
+        // intentamos obtenerlo de getUserMedia nuevamente
+        if (!this.stream) {
+            const constraints = {
+                video: {
+                    facingMode: AppConfig.useFrontCamera ? 'user' : 'environment',
+                    width: AppConfig.getCameraResolution().width,
+                    height: AppConfig.getCameraResolution().height
+                }
+            };
+            
+            navigator.mediaDevices.getUserMedia(constraints)
+                .then(stream => {
+                    this.stream = stream;
+                    video2.srcObject = stream;
+                    video2.play().catch(err => console.error('Error reproduciendo video2:', err));
+                    console.log("Stream configurado para video2 en modo VR");
+                })
+                .catch(err => console.error("Error obteniendo stream para video2:", err));
+        } else {
+            // Si ya tenemos el stream, usarlo directamente
+            video2.srcObject = this.stream;
+            video2.play().catch(err => console.error('Error reproduciendo video2:', err));
+            console.log("Stream existente configurado para video2 en modo VR");
         }
     },
     
@@ -135,8 +174,7 @@ const CameraManager = {
                 
                 // Sincronizar el segundo video si estamos en modo VR
                 if (AppConfig.vrMode) {
-                    AppConfig.elements.video2.srcObject = mediaStream;
-                    AppConfig.elements.video2.play();
+                    this.setupVRVideoStream();
                 }
                 
                 // Configurar un bucle para procesar frames con límite de FPS
@@ -162,6 +200,12 @@ const CameraManager = {
                     UI.updateButtonStates(true, this.videoDevices);
                     UI.updateStatus("Cámara iniciada. Muestra tus manos.");
                     HandDetector.resetFpsCounter();
+                    
+                    // Re-ajustar el canvas cuando la cámara esté lista
+                    setTimeout(() => {
+                        UI.setupCanvas();
+                    }, 300);
+                    
                     processFrame();
                 };
             };
@@ -211,6 +255,16 @@ const CameraManager = {
         if (this.stream) {
             this.stream.getTracks().forEach(track => track.stop());
             AppConfig.elements.video.srcObject = null;
+        }
+        
+        // Detener el segundo video si está en uso
+        if (AppConfig.elements.video2.srcObject) {
+            try {
+                const tracks = AppConfig.elements.video2.srcObject.getTracks();
+                tracks.forEach(track => track.stop());
+            } catch (e) {
+                console.warn("Error al detener pistas de video2:", e);
+            }
             AppConfig.elements.video2.srcObject = null;
         }
         

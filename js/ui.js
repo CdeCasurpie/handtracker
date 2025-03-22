@@ -1,7 +1,7 @@
 /**
- * Módulo UI
- * Gestiona todos los elementos de la interfaz de usuario
- */
+* Módulo UI
+* Gestiona todos los elementos de la interfaz de usuario
+*/
 const UI = {
     /**
      * Inicializa todos los elementos de la UI y sus eventos
@@ -20,41 +20,41 @@ const UI = {
             // Videos
             video: document.getElementById('webcam'),
             video2: document.getElementById('webcam2'),
-            
+
             // Canvas
             canvas: document.getElementById('output_canvas'),
             canvas2: document.getElementById('output_canvas2'),
-            
+
             // Contenedores
             videoContainers: document.querySelectorAll('#videoContainer'),
             outputCanvases: document.querySelectorAll('canvas'),
-            
+
             // Controles de estado
             statusDiv: document.getElementById('status'),
             fpsDiv: document.getElementById('fps'),
-            
+
             // Botones
             startBtn: document.getElementById('startBtn'),
             stopBtn: document.getElementById('stopBtn'),
             switchCameraBtn: document.getElementById('switchCameraBtn'),
             vrModeBtn: document.getElementById('vrModeBtn'),
             fullscreenBtn: document.getElementById('fullscreenBtn'),
-            
+
             // Sliders
             modelComplexitySlider: document.getElementById('modelComplexity'),
             renderFpsSlider: document.getElementById('renderFps'),
             complexityValueSpan: document.getElementById('complexityValue'),
             fpsValueSpan: document.getElementById('fpsValue')
         };
-        
+
         // Guardar contextos de canvas
         elements.ctx = elements.canvas.getContext('2d');
         elements.ctx2 = elements.canvas2.getContext('2d');
-        
+
         // Guardar referencia a elementos en AppConfig
         AppConfig.elements = elements;
     },
-    
+
     /**
      * Configura los escuchadores de eventos para los controles de la UI
      */
@@ -63,79 +63,186 @@ const UI = {
             startBtn, stopBtn, switchCameraBtn, vrModeBtn, fullscreenBtn,
             modelComplexitySlider, renderFpsSlider
         } = AppConfig.elements;
-        
+
         // Botones principales
         startBtn.addEventListener('click', CameraManager.startCamera);
         stopBtn.addEventListener('click', CameraManager.stopCamera);
         switchCameraBtn.addEventListener('click', CameraManager.switchCamera);
         vrModeBtn.addEventListener('click', this.toggleVRMode);
         fullscreenBtn.addEventListener('click', this.toggleFullscreen);
-        
+
         // Controles de rendimiento
         modelComplexitySlider.addEventListener('input', this.updateModelComplexity);
         renderFpsSlider.addEventListener('input', this.updateRenderFps);
-        
+
         // Eventos de ventana
         window.addEventListener('resize', this.setupCanvas);
         window.addEventListener('orientationchange', () => {
             setTimeout(this.setupCanvas, 100);
         });
     },
-    
+
     /**
-     * Configura el tamaño del canvas para ajustarse a la pantalla
+     * Configura el tamaño del canvas para que coincida exactamente con la cámara
      */
     setupCanvas() {
-        const { canvas, canvas2 } = AppConfig.elements;
-        const windowWidth = window.innerWidth;
-        const windowHeight = window.innerHeight;
-        
-        // Si estamos en modo de baja resolución, reducimos el tamaño del canvas
-        const scaleFactor = AppConfig.lowResolutionMode ? 0.5 : 1.0;
-        
-        canvas.width = windowWidth * scaleFactor;
-        canvas.height = windowHeight * scaleFactor;
-        canvas2.width = windowWidth * scaleFactor;
-        canvas2.height = windowHeight * scaleFactor;
-        
-        // Hacer que el canvas se vea a pantalla completa con CSS
-        canvas.style.width = '100%';
-        canvas.style.height = '100vh';
-        canvas2.style.width = '100%';
-        canvas2.style.height = '100vh';
-        
-        console.log(`Canvas configurado: ${canvas.width}x${canvas.height} (escalado a pantalla completa)`);
+        const { video, video2, canvas, canvas2 } = AppConfig.elements;
+
+        // Función para ajustar el canvas al tamaño exacto del video
+        const adjustCanvasSize = () => {
+            // Obtener el tamaño real del video (respetando su relación de aspecto)
+            const videoWidth = video.videoWidth || 640;
+            const videoHeight = video.videoHeight || 480;
+
+            // Establecer el tamaño interno del canvas para coincidir con el video
+            canvas.width = videoWidth;
+            canvas.height = videoHeight;
+            canvas2.width = videoWidth;
+            canvas2.height = videoHeight;
+
+            // Ajustar el CSS del canvas para mantener la relación de aspecto
+            // mientras se ajusta a la altura de la pantalla
+            const aspectRatio = videoWidth / videoHeight;
+            const viewportHeight = window.innerHeight;
+            const canvasHeight = viewportHeight;
+            const canvasWidth = canvasHeight * aspectRatio;
+
+            canvas.style.height = `${canvasHeight}px`;
+            canvas.style.width = `${canvasWidth}px`;
+            canvas2.style.height = `${canvasHeight}px`;
+            canvas2.style.width = `${canvasWidth}px`;
+
+            console.log(`Canvas ajustado al tamaño del video: ${canvas.width}x${canvas.height} (CSS: ${canvasWidth}x${canvasHeight})`);
+        };
+
+        // Ajustar inicialmente con valores por defecto
+        adjustCanvasSize();
+
+        // Ajustar cuando el video tenga metadatos disponibles
+        video.addEventListener('loadedmetadata', adjustCanvasSize);
+
+        // Ajustar cada vez que cambie el tamaño del video
+        video.addEventListener('resize', adjustCanvasSize);
+
+        // Aplicar cambios específicos para el modo VR si está activo
+        if (AppConfig.vrMode) {
+            this.applyVRModeStyles();
+        }
     },
-    
+
+    /**
+         * Aplica estilos específicos para el modo VR
+         */
+    applyVRModeStyles() {
+        const { canvas, canvas2 } = AppConfig.elements;
+
+        // Forzar la visibilidad del segundo canvas
+        canvas2.style.display = 'block';
+        document.querySelectorAll('#videoContainer.right').forEach(el => {
+            el.style.display = 'block';
+        });
+
+        // En modo VR, los canvas ocupan cada uno la mitad del ancho
+        if (AppConfig.vrMode) {
+            document.querySelectorAll('#videoContainer.left').forEach(el => {
+                el.style.width = '50%';
+                el.style.left = '0';
+            });
+
+            document.querySelectorAll('#videoContainer.right').forEach(el => {
+                el.style.width = '50%';
+                el.style.left = '50%';
+            });
+
+            canvas.style.left = '25%';
+            canvas2.style.left = '75%';
+        }
+    },
+
     /**
      * Alternar modo VR
      */
     toggleVRMode() {
-        const { vrModeBtn, videoContainers, outputCanvases } = AppConfig.elements;
-        
+        const { vrModeBtn, video, video2 } = AppConfig.elements;
+
         AppConfig.vrMode = !AppConfig.vrMode;
-        
+
         if (AppConfig.vrMode) {
             // Activar modo VR
             document.body.classList.add('vr-mode');
             vrModeBtn.classList.add('active');
-            videoContainers[1].style.display = 'block';
-            outputCanvases[1].style.display = 'block';
-            
-            // Sincronizar el segundo video con el primero
-            if (CameraManager.stream) {
-                AppConfig.elements.video2.srcObject = CameraManager.stream;
-                AppConfig.elements.video2.play();
-            }
+
+            // Mostrar el segundo contenedor de video y canvas
+            document.querySelectorAll('#videoContainer.right').forEach(el => {
+                el.style.display = 'block';
+            });
+            document.querySelectorAll('#output_canvas2.right').forEach(el => {
+                el.style.display = 'block';
+            });
+
+            // Aplicar estilos específicos para VR
+            this.applyVRModeStyles();
+
+            // Asegurarnos de que ambos videos tengan la misma fuente
+            // Usamos un pequeño retraso para asegurar que todo esté listo
+            setTimeout(() => {
+                console.log("Sincronizando video2 en modo VR");
+                if (CameraManager.stream) {
+                    try {
+                        // Clonar el stream para el segundo video
+                        const tracks = CameraManager.stream.getVideoTracks();
+                        if (tracks.length > 0) {
+                            const newStream = new MediaStream([tracks[0].clone()]);
+                            video2.srcObject = newStream;
+                            video2.play().catch(err => console.error('Error reproduciendo video2:', err));
+                            console.log("Video2 configurado con stream clonado");
+                        } else {
+                            console.error("No se encontraron pistas de video en el stream");
+                            video2.srcObject = CameraManager.stream;
+                            video2.play().catch(err => console.error('Error reproduciendo video2:', err));
+                        }
+                    } catch (e) {
+                        console.error("Error al clonar stream:", e);
+                        // Fallback al método directo
+                        video2.srcObject = CameraManager.stream;
+                        video2.play().catch(err => console.error('Error reproduciendo video2:', err));
+                    }
+                } else {
+                    console.warn("No hay stream disponible para video2");
+                }
+            }, 500);
         } else {
             // Desactivar modo VR
             document.body.classList.remove('vr-mode');
             vrModeBtn.classList.remove('active');
-            videoContainers[1].style.display = 'none';
-            outputCanvases[1].style.display = 'none';
+
+            // Ocultar el segundo contenedor de video y canvas
+            document.querySelectorAll('#videoContainer.right').forEach(el => {
+                el.style.display = 'none';
+            });
+            document.querySelectorAll('#output_canvas2.right').forEach(el => {
+                el.style.display = 'none';
+            });
+
+            // Detener el video2
+            if (video2.srcObject) {
+                const tracks = video2.srcObject.getTracks();
+                tracks.forEach(track => track.stop());
+                video2.srcObject = null;
+            }
+
+            // Restaurar el tamaño/posición original
+            document.querySelectorAll('#videoContainer.left').forEach(el => {
+                el.style.width = '';
+                el.style.left = '';
+            });
+
+            const { canvas } = AppConfig.elements;
+            canvas.style.left = '50%';
+            canvas.style.transform = 'translateX(-50%)';
         }
     },
-    
+
     /**
      * Activar modo pantalla completa
      */
@@ -151,54 +258,54 @@ const UI = {
             }
         }
     },
-    
+
     /**
      * Actualiza la complejidad del modelo
      */
     updateModelComplexity() {
         const { modelComplexitySlider, complexityValueSpan } = AppConfig.elements;
-        
+
         AppConfig.modelComplexity = parseInt(modelComplexitySlider.value);
         complexityValueSpan.textContent = AppConfig.modelComplexity;
-        
+
         // Si cambiamos a complejidad 0 (lite), sugerimos dibujado simplificado
         // Si cambiamos a complejidad 1 (full), sugerimos dibujado completo
         AppConfig.drawAllPoints = AppConfig.modelComplexity === 1;
-        
+
         if (HandDetector.hands) {
             HandDetector.hands.setOptions({
                 modelComplexity: AppConfig.modelComplexity
             });
         }
     },
-    
+
     /**
      * Actualiza el límite de FPS
      */
     updateRenderFps() {
         const { renderFpsSlider, fpsValueSpan } = AppConfig.elements;
-        
+
         AppConfig.maxRenderFps = parseInt(renderFpsSlider.value);
         fpsValueSpan.textContent = AppConfig.maxRenderFps;
     },
-    
+
     /**
      * Actualiza los valores iniciales de los controles de rendimiento
      */
     updatePerformanceControls() {
         const { modelComplexitySlider, renderFpsSlider, complexityValueSpan, fpsValueSpan } = AppConfig.elements;
-        
+
         // Si la complejidad es 1, activamos dibujo de todos los puntos
         if (AppConfig.modelComplexity === 1) {
             AppConfig.drawAllPoints = true;
         }
-        
+
         modelComplexitySlider.value = AppConfig.modelComplexity;
         renderFpsSlider.value = AppConfig.maxRenderFps;
         complexityValueSpan.textContent = AppConfig.modelComplexity;
         fpsValueSpan.textContent = AppConfig.maxRenderFps;
     },
-    
+
     /**
      * Actualiza el estado de los botones según el estado de la aplicación
      * @param {boolean} isRunning - Si la cámara está funcionando
@@ -206,18 +313,18 @@ const UI = {
      */
     updateButtonStates(isRunning, videoDevices = []) {
         const { startBtn, stopBtn, switchCameraBtn } = AppConfig.elements;
-        
+
         startBtn.disabled = isRunning;
         stopBtn.disabled = !isRunning;
         switchCameraBtn.disabled = videoDevices.length <= 1 || !isRunning;
-        
+
         if (videoDevices.length > 1) {
             switchCameraBtn.style.display = 'flex';
         } else {
             switchCameraBtn.style.display = 'none';
         }
     },
-    
+
     /**
      * Actualiza el texto de estado
      * @param {string} message - Mensaje a mostrar
@@ -225,13 +332,13 @@ const UI = {
     updateStatus(message) {
         AppConfig.elements.statusDiv.textContent = message;
     },
-    
+
     /**
      * Limpia ambos canvas
      */
     clearCanvases() {
         const { ctx, ctx2, canvas, canvas2 } = AppConfig.elements;
-        
+
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
     }

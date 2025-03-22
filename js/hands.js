@@ -111,8 +111,13 @@ const HandDetector = {
             // Procesar cada mano en ambos canvas
             Renderer.drawHandLandmarks(AppConfig.elements.ctx, results);
             
+            // Si estamos en modo VR, dibujar también en el segundo canvas
             if (AppConfig.vrMode) {
-                Renderer.drawHandLandmarks(AppConfig.elements.ctx2, results);
+                try {
+                    Renderer.drawHandLandmarks(AppConfig.elements.ctx2, results);
+                } catch (e) {
+                    console.error('Error dibujando en el segundo canvas:', e);
+                }
             }
         } else {
             UI.updateStatus("No se detectaron manos");

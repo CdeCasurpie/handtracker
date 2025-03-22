@@ -111,13 +111,6 @@ const Renderer = {
         context.arc(x, y, radius, 0, 2 * Math.PI);
         context.fillStyle = 'white';
         context.fill();
-
-        //brillo
-        context.beginPath();
-        context.arc(x, y, radius *1.3, 0, 2 * Math.PI);
-        context.fillStyle = 'rgba(255, 255, 255, 0.5)';
-        context.fill();
-
     },
     
     /**

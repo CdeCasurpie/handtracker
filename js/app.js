@@ -9,6 +9,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Configurar el tamaño del canvas
     UI.setupCanvas();
     
+    // Verificar si hay un parámetro en la URL para activar el modo VR automáticamente
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('vr') || urlParams.get('vr') === 'true') {
+        setTimeout(() => {
+            UI.toggleVRMode();
+            console.log('Modo VR activado automáticamente');
+        }, 1000);
+    }
+    
     // Iniciar el detector de manos
     const modelLoaded = HandDetector.init();
     
