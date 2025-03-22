@@ -1,94 +1,199 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Detector de Manos - Compatible</title>
+    <title>Detector de Manos - Pantalla Completa</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        * {
             margin: 0;
-            padding: 10px;
-            text-align: center;
-            background-color: #f0f0f0;
-        }
-        .container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-        }
-        #videoContainer {
-            position: relative;
-            margin-bottom: 15px;
-            width: 100%;
-            max-width: 640px;
-            background-color: #000;
-        }
-        #output_canvas {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 10;
-        }
-        video {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-        button {
-            padding: 15px 25px;
-            margin: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 18px;
-        }
-        button:disabled {
-            background-color: #cccccc;
-        }
-        #status {
-            margin: 15px 0;
-            padding: 10px;
-            background-color: #e9e9e9;
-            border-radius: 5px;
-            width: 100%;
-            max-width: 640px;
+            padding: 0;
             box-sizing: border-box;
         }
-        #compatibilityCheck {
-            margin: 15px 0;
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: white;
+            position: relative;
+        }
+        
+        .full-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        #videoContainer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background-color: #000;
+            z-index: 1;
+        }
+        
+        #webcam {
+            width: 100%;
+            height: 100vh;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        
+        #output_canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 2;
+        }
+        
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            z-index: 10;
+        }
+        
+        .top-controls {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 10;
+        }
+        
+        #status {
+            text-align: center;
+            padding: 5px;
+            font-size: 14px;
+            color: white;
+        }
+        
+        button {
+            padding: 12px 20px;
+            margin: 0 10px;
+            background-color: rgba(0, 150, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 16px;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            min-width: 110px;
+        }
+        
+        button:disabled {
+            background-color: rgba(100, 100, 100, 0.7);
+        }
+        
+        #switchCameraBtn {
+            position: fixed;
+            top: 60px;
+            right: 20px;
             padding: 15px;
-            background-color: #ffdddd;
-            border-radius: 5px;
-            border: 1px solid #ff0000;
+            border-radius: 50%;
+            min-width: unset;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 11;
+        }
+        
+        #switchCameraBtn svg {
+            width: 30px;
+            height: 30px;
+            fill: white;
+        }
+        
+        #compatibilityCheck {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 90%;
+            max-height: 80%;
+            overflow-y: auto;
+            z-index: 100;
             display: none;
+        }
+        
+        #browserInfo {
+            text-align: left;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        
+        @media (orientation: landscape) {
+            .controls {
+                right: 20px;
+                bottom: 50%;
+                left: auto;
+                transform: translateY(50%);
+                flex-direction: column;
+                width: auto;
+            }
+            
+            button {
+                margin: 10px 0;
+            }
+            
+            #switchCameraBtn {
+                top: 20px;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>Detector de Manos</h1>
-
     <div id="compatibilityCheck">
         <h2>Problemas de compatibilidad detectados</h2>
         <p id="compatibilityMessage"></p>
         <div id="browserInfo"></div>
     </div>
 
-    <div class="container">
+    <div class="full-container">
         <div id="videoContainer">
             <video id="webcam" playsinline autoplay muted></video>
             <canvas id="output_canvas"></canvas>
         </div>
         
-        <div id="status">Verificando compatibilidad del navegador...</div>
+        <div class="top-controls">
+            <div id="status">Verificando compatibilidad...</div>
+        </div>
         
-        <div>
-            <button id="startBtn" disabled>Iniciar Cámara</button>
+        <button id="switchCameraBtn" disabled>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M20 4h-3.17L15 2H9L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 11.5V13H9v2.5L5.5 12 9 8.5V11h6V8.5l3.5 3.5-3.5 3.5z"/>
+            </svg>
+        </button>
+        
+        <div class="controls">
+            <button id="startBtn" disabled>Iniciar</button>
             <button id="stopBtn" disabled>Detener</button>
         </div>
     </div>
@@ -106,6 +211,7 @@
         const statusDiv = document.getElementById('status');
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
+        const switchCameraBtn = document.getElementById('switchCameraBtn');
         const videoContainer = document.getElementById('videoContainer');
         const compatibilityCheck = document.getElementById('compatibilityCheck');
         const compatibilityMessage = document.getElementById('compatibilityMessage');
@@ -117,6 +223,8 @@
         let stream;
         let isRunning = false;
         let isCompatible = false;
+        let useFrontCamera = true;
+        let videoDevices = [];
         
         // Verificar compatibilidad del navegador
         function checkCompatibility() {
@@ -156,8 +264,10 @@
             info.push(hasCanvas ? "✅ Canvas está disponible" : "❌ Canvas NO está disponible");
             
             // Verificar si las bibliotecas de MediaPipe están cargadas
-            const hasMediaPipe = (typeof Hands !== 'undefined') && (typeof Camera !== 'undefined');
-            info.push(hasMediaPipe ? "✅ MediaPipe está cargado" : "❌ MediaPipe NO está cargado");
+            const hasMediaPipe = (typeof Hands !== 'undefined');
+            const hasCamera = (typeof Camera !== 'undefined');
+            info.push(hasMediaPipe ? "✅ MediaPipe Hands está cargado" : "❌ MediaPipe Hands NO está cargado");
+            info.push(hasCamera ? "✅ MediaPipe Camera está cargado" : "❌ MediaPipe Camera NO está cargado");
             
             // Determinar compatibilidad general
             isCompatible = hasGetUserMedia && hasCanvas && hasMediaPipe;
@@ -184,23 +294,47 @@
                 statusDiv.textContent = "Tu navegador no es compatible";
             } else {
                 setupHands();
+                checkCameraDevices();
             }
             
             return isCompatible;
         }
         
-        // Configurar canvas
+        // Verificar dispositivos de cámara disponibles
+        async function checkCameraDevices() {
+            try {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+                    console.log("enumerateDevices() no soportado.");
+                    return;
+                }
+                
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                videoDevices = devices.filter(device => device.kind === 'videoinput');
+                
+                console.log(`Se encontraron ${videoDevices.length} dispositivos de video`);
+                
+                // Habilitar o deshabilitar el botón de cambio de cámara
+                switchCameraBtn.disabled = videoDevices.length <= 1;
+                
+                if (videoDevices.length > 1) {
+                    switchCameraBtn.style.display = 'flex';
+                } else {
+                    switchCameraBtn.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error al enumerar dispositivos:', error);
+            }
+        }
+        
+        // Configurar canvas para pantalla completa
         function setupCanvas() {
-            // Hacer que el canvas tenga el mismo tamaño que el contenedor de video
-            const containerWidth = videoContainer.clientWidth;
-            const containerHeight = Math.floor(containerWidth * 0.75); // Mantener relación 4:3
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
             
-            videoContainer.style.height = `${containerHeight}px`;
+            canvas.width = windowWidth;
+            canvas.height = windowHeight;
             
-            canvas.width = containerWidth;
-            canvas.height = containerHeight;
-            
-            statusDiv.textContent = `Canvas configurado: ${canvas.width}x${canvas.height}`;
+            console.log(`Canvas configurado a pantalla completa: ${canvas.width}x${canvas.height}`);
         }
         
         // Inicializar MediaPipe Hands
@@ -223,10 +357,10 @@
                 
                 hands.onResults(onResults);
                 
-                // Configurar tamaño del canvas
+                // Configurar tamaño del canvas para pantalla completa
                 setupCanvas();
                 
-                statusDiv.textContent = "Modelo cargado. Presiona 'Iniciar Cámara'";
+                statusDiv.textContent = "Modelo cargado. Presiona 'Iniciar' para comenzar";
                 startBtn.disabled = false;
             } catch (error) {
                 statusDiv.textContent = `Error al cargar modelo: ${error.message}`;
@@ -355,20 +489,47 @@
             }
         }
         
-        // Iniciar cámara usando Camera de MediaPipe (compatible)
+        // Cambiar entre cámaras frontal/trasera
+        async function switchCamera() {
+            useFrontCamera = !useFrontCamera;
+            
+            if (isRunning) {
+                stopCamera();
+                await new Promise(resolve => setTimeout(resolve, 300)); // Breve pausa
+                startCamera();
+            }
+        }
+        
+        // Iniciar cámara
+        function startCamera() {
+            try {
+                statusDiv.textContent = "Iniciando cámara...";
+                
+                // Verificar si MediaPipe Camera está disponible
+                if (typeof Camera !== 'undefined') {
+                    startCameraWithMediaPipe();
+                } else {
+                    startCameraDirect();
+                }
+            } catch (error) {
+                statusDiv.textContent = `Error al iniciar la cámara: ${error.message}`;
+                console.error(error);
+            }
+        }
+        
+        // Iniciar cámara con MediaPipe Camera
         function startCameraWithMediaPipe() {
             try {
-                statusDiv.textContent = "Iniciando cámara con MediaPipe...";
-                
-                // Inicializar la cámara con la biblioteca Camera de MediaPipe
+                // Configuración de la cámara
                 camera = new Camera(video, {
                     onFrame: async () => {
                         if (isRunning) {
                             await hands.send({image: video});
                         }
                     },
-                    width: 640,
-                    height: 480
+                    width: window.innerWidth,
+                    height: window.innerHeight,
+                    facingMode: useFrontCamera ? 'user' : 'environment'
                 });
                 
                 // Iniciar la cámara
@@ -377,20 +538,30 @@
                     isRunning = true;
                     startBtn.disabled = true;
                     stopBtn.disabled = false;
+                    switchCameraBtn.disabled = videoDevices.length <= 1;
                 }).catch(error => {
-                    statusDiv.textContent = `Error al iniciar cámara: ${error.message}`;
+                    statusDiv.textContent = `Error con MediaPipe Camera: ${error.message}`;
                     console.error(error);
+                    // Si falla, intentar método directo
+                    startCameraDirect();
                 });
             } catch (error) {
-                statusDiv.textContent = `Error al acceder a la cámara: ${error.message}`;
+                statusDiv.textContent = `Error con MediaPipe Camera: ${error.message}`;
                 console.error(error);
+                // Si falla, intentar método directo
+                startCameraDirect();
             }
         }
         
-        // Iniciar cámara directamente (menos compatible)
+        // Iniciar cámara directamente con getUserMedia
         function startCameraDirect() {
             try {
                 statusDiv.textContent = "Iniciando cámara directamente...";
+                
+                // Detener stream actual si existe
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
                 
                 // Determinar qué método de getUserMedia usar
                 const getUserMedia = navigator.mediaDevices?.getUserMedia || 
@@ -405,8 +576,9 @@
                 // Configuración de la cámara
                 const constraints = {
                     video: {
-                        width: { ideal: 640 },
-                        height: { ideal: 480 }
+                        facingMode: useFrontCamera ? 'user' : 'environment',
+                        width: { ideal: window.innerWidth },
+                        height: { ideal: window.innerHeight }
                     },
                     audio: false
                 };
@@ -429,13 +601,14 @@
                         isRunning = true;
                         startBtn.disabled = true;
                         stopBtn.disabled = false;
+                        switchCameraBtn.disabled = videoDevices.length <= 1;
                         statusDiv.textContent = "Cámara iniciada. Muestra tus manos.";
                         processFrame();
                     };
                 };
                 
                 const handleError = (error) => {
-                    statusDiv.textContent = `Error: ${error.name}`;
+                    statusDiv.textContent = `Error con getUserMedia: ${error.name}`;
                     console.error(error);
                 };
                 
@@ -453,22 +626,6 @@
                 statusDiv.textContent = `Error al acceder a la cámara: ${error.message}`;
                 console.error(error);
             }
-        }
-        
-        // Iniciar cámara (intentar ambos métodos)
-        function startCamera() {
-            // Primero intentar con MediaPipe Camera
-            if (typeof Camera !== 'undefined') {
-                try {
-                    startCameraWithMediaPipe();
-                    return;
-                } catch (e) {
-                    console.log("Error al usar Camera de MediaPipe, intentando método directo", e);
-                }
-            }
-            
-            // Si falla, intentar método directo
-            startCameraDirect();
         }
         
         // Detener cámara
@@ -490,14 +647,28 @@
             statusDiv.textContent = "Cámara detenida";
             startBtn.disabled = false;
             stopBtn.disabled = true;
+            switchCameraBtn.disabled = true;
         }
         
         // Eventos de botones
         startBtn.addEventListener('click', startCamera);
         stopBtn.addEventListener('click', stopCamera);
+        switchCameraBtn.addEventListener('click', switchCamera);
         
-        // Manejar cambios de tamaño de pantalla
-        window.addEventListener('resize', setupCanvas);
+        // Manejar cambios de orientación y tamaño de pantalla
+        window.addEventListener('resize', () => {
+            setupCanvas();
+            if (isRunning && camera) {
+                // Reiniciar la cámara para adaptarse al nuevo tamaño
+                camera.stop();
+                camera.start();
+            }
+        });
+        
+        // Si se cambia de orientación, ajustar el tamaño
+        window.addEventListener('orientationchange', () => {
+            setTimeout(setupCanvas, 100); // Pequeño retraso para que termine de cambiar
+        });
         
         // Inicializar al cargar la página
         window.addEventListener('load', checkCompatibility);
