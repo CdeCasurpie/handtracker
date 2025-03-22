@@ -1,8 +1,9 @@
-/* Estilos generales */
+/* Estilos generales - Minimalista moderno */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    font-family: 'Inter', 'Roboto', sans-serif;
 }
 
 html, body {
@@ -12,9 +13,8 @@ html, body {
 }
 
 body {
-    font-family: Arial, sans-serif;
     background-color: #000;
-    color: white;
+    color: rgba(255, 255, 255, 0.85);
     position: relative;
 }
 
@@ -35,7 +35,7 @@ body {
     position: relative;
     overflow: hidden;
     height: 100vh;
-    background-color: #000;
+    background-color: rgba(0, 0, 0, 0.8);
     z-index: 1;
     display: flex;
     justify-content: center;
@@ -60,7 +60,6 @@ body {
 }
 
 /* Estilos para modo VR */
-/* Estilos para modo VR */
 .vr-mode .full-container {
     overflow: hidden;
 }
@@ -78,7 +77,7 @@ body {
 .vr-mode #videoContainer.right {
     position: absolute;
     overflow: hidden;
-    z-index: -1;
+    z-index: 1;
     top: 0;
     left: 50%;
     width: 50%;
@@ -94,7 +93,7 @@ body {
 
 .vr-mode #output_canvas {
     left: 25%;
-    z-index: 1000;
+    z-index: 20;
     transform: translateX(-50%);
 }
 
@@ -102,17 +101,19 @@ body {
     left: 75%;
     transform: translateX(-50%);
     display: block !important;
-    background-color: black; /* Asegurar fondo negro para el segundo canvas */
+    background-color: black; /* Fondo negro para segundo canvas */
 }
 
+/* Divisor central para modo VR */
 .vr-divider {
     position: absolute;
     top: 0;
     left: 50%;
-    width: 2px;
+    width: 1px;
     height: 100vh;
-    background-color: rgba(255, 255, 255, 0.3);
-    z-index: 5;
+    background-color: rgba(32, 156, 238, 0.4);
+    box-shadow: 0 0 5px rgba(32, 156, 238, 0.5);
+    z-index: 15;
     display: none;
 }
 
@@ -120,17 +121,7 @@ body {
     display: block;
 }
 
-/* Controles e indicadores */
-.controls {
-    position: fixed;
-    bottom: 20px;
-    left: 0;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    z-index: 12;
-}
-
+/* Controles e indicadores - Minimalista */
 .top-controls {
     position: fixed;
     top: 0;
@@ -138,144 +129,207 @@ body {
     width: 100%;
     padding: 10px;
     background-color: rgba(0, 0, 0, 0.5);
-    z-index: 12;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    z-index: 50;
+    border-bottom: 1px solid rgba(32, 156, 238, 0.3);
+    transition: all 0.3s ease;
 }
 
 #status {
     text-align: center;
-    padding: 5px;
+    padding: 5px 10px;
     font-size: 14px;
-    color: white;
+    color: rgba(255, 255, 255, 0.85);
+    letter-spacing: 0.3px;
+    font-weight: 300;
 }
 
 #fps {
     position: fixed;
-    top: 30px;
-    right: 10px;
-    padding: 5px;
-    font-size: 14px;
-    color: white;
-    background-color: rgba(0, 0, 0, 0.5);
-    border-radius: 5px;
-    z-index: 20;
+    top: 15px;
+    right: 15px;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.7);
+    background-color: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(32, 156, 238, 0.4);
+    border-radius: 3px;
+    z-index: 60;
 }
 
-/* Botones */
-button {
-    padding: 12px 20px;
-    margin: 0 10px;
-    background-color: rgba(0, 150, 0, 0.7);
-    color: white;
-    border: none;
-    border-radius: 30px;
-    cursor: pointer;
-    font-size: 16px;
+/* Panel de controles principal */
+.controls {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    justify-content: center;
+    z-index: 50;
+    background-color: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    min-width: 110px;
+    border-radius: 6px;
+    padding: 6px 10px;
+    border: 1px solid rgba(32, 156, 238, 0.3);
+    transition: all 0.3s ease;
+}
+
+/* Botones - Estilo Minimalista */
+button {
+    padding: 8px 14px;
+    margin: 0 6px;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(32, 156, 238, 0.4);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 400;
+    min-width: 90px;
+    transition: all 0.2s ease;
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+button:hover {
+    background-color: rgba(32, 156, 238, 0.1);
+    border-color: rgba(32, 156, 238, 0.8);
+}
+
+button:active {
+    transform: translateY(1px);
 }
 
 button:disabled {
-    background-color: rgba(100, 100, 100, 0.7);
+    background-color: rgba(0, 0, 0, 0.3);
+    color: rgba(255, 255, 255, 0.4);
+    border-color: rgba(32, 156, 238, 0.2);
+    cursor: not-allowed;
 }
 
 /* Botones de control circular */
-#vrModeBtn {
+.action-button {
     position: fixed;
-    top: 60px;
-    left: 20px;
-    padding: 15px;
-    border-radius: 50%;
-    min-width: unset;
-    width: 60px;
-    height: 60px;
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(32, 156, 238, 0.4);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 11;
-    background-color: rgba(150, 0, 150, 0.7);
+    cursor: pointer;
+    z-index: 55;
+    transition: all 0.2s ease;
+    min-width: unset;
+    padding: 0;
+}
+
+.action-button:hover {
+    background-color: rgba(32, 156, 238, 0.1);
+    border-color: rgba(32, 156, 238, 0.8);
+}
+
+.action-button:active {
+    transform: scale(0.95);
+}
+
+.action-button svg {
+    width: 20px;
+    height: 20px;
+    fill: rgba(255, 255, 255, 0.85);
+}
+
+/* Posiciones de los botones circulares */
+#vrModeBtn {
+    top: 70px;
+    left: 15px;
 }
 
 #vrModeBtn.active {
-    background-color: rgba(200, 0, 200, 0.9);
-}
-
-#vrModeBtn svg {
-    width: 30px;
-    height: 30px;
-    fill: white;
+    border-color: rgba(32, 156, 238, 0.8);
+    box-shadow: 0 0 5px rgba(32, 156, 238, 0.5);
 }
 
 #switchCameraBtn {
-    position: fixed;
-    top: 60px;
-    right: 20px;
-    padding: 15px;
-    border-radius: 50%;
-    min-width: unset;
-    width: 60px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 11;
-}
-
-#switchCameraBtn svg {
-    width: 30px;
-    height: 30px;
-    fill: white;
+    top: 70px;
+    right: 15px;
 }
 
 #fullscreenBtn {
-    position: fixed;
-    top: 130px;
-    right: 20px;
-    padding: 15px;
-    border-radius: 50%;
-    min-width: unset;
-    width: 60px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 11;
-    background-color: rgba(0, 100, 150, 0.7);
-}
-
-#fullscreenBtn svg {
-    width: 30px;
-    height: 30px;
-    fill: white;
+    top: 125px;
+    right: 15px;
 }
 
 /* Controles de rendimiento */
 #performanceControls {
     position: fixed;
-    top: 130px;
-    left: 20px;
-    padding: 10px;
+    top: 70px;
+    left: 70px;
+    padding: 12px;
     background-color: rgba(0, 0, 0, 0.5);
-    border-radius: 10px;
-    z-index: 11;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border-radius: 4px;
+    z-index: 55;
+    border: 1px solid rgba(32, 156, 238, 0.3);
+    min-width: 180px;
+    transition: all 0.3s ease;
 }
 
 .slider-container {
-    margin-bottom: 10px;
+    margin-bottom: 12px;
+}
+
+.slider-container:last-child {
+    margin-bottom: 0;
 }
 
 .slider-container label {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 6px;
     font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 400;
+    letter-spacing: 0.3px;
 }
 
 .slider-container input {
     width: 100%;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(32, 156, 238, 0.15);
+    outline: none;
+    border-radius: 2px;
 }
 
-/* Ajustes para pantallas en modo horizontal */
+.slider-container input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    border: 1px solid rgba(32, 156, 238, 0.6);
+}
+
+.slider-container input::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    border: 1px solid rgba(32, 156, 238, 0.6);
+}
+
+/* Ajustes para modo horizontal */
 @media (orientation: landscape) {
     .controls {
         right: 20px;
@@ -284,9 +338,29 @@ button:disabled {
         transform: translateY(50%);
         flex-direction: column;
         width: auto;
+        padding: 10px 6px;
     }
     
     button {
-        margin: 10px 0;
+        margin: 5px 0;
     }
+}
+
+/* Ocultar controles en modo VR */
+.vr-mode .top-controls,
+.vr-mode .controls,
+.vr-mode #performanceControls,
+.vr-mode .action-button:not(#vrModeBtn) {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease, visibility 0.5s;
+}
+
+/* Mostrar solo el botón de VR en modo VR */
+.vr-mode #vrModeBtn {
+    opacity: 0.5;
+}
+
+.vr-mode #vrModeBtn:hover {
+    opacity: 1;
 }

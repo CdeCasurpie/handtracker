@@ -129,9 +129,120 @@ const UI = {
             this.applyVRModeStyles();
         }
     },
+
     /**
-         * Aplica estilos específicos para el modo VR
+         * Mostrar u ocultar los controles en modo VR
+         * @param {boolean} show - Verdadero para mostrar, falso para ocultar
          */
+    toggleVRControls(show) {
+        const controlsElements = [
+            '.top-controls',
+            '.controls',
+            '#performanceControls',
+            '#switchCameraBtn',
+            '#fullscreenBtn'
+        ];
+
+        // Aplicar visibilidad a los elementos de control
+        controlsElements.forEach(selector => {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach(el => {
+                if (show) {
+                    el.style.opacity = '1';
+                    el.style.visibility = 'visible';
+                } else {
+                    el.style.opacity = '0';
+                    el.style.visibility = 'hidden';
+                }
+            });
+        });
+    },
+
+    /**
+     * Alternar modo VR
+     */
+    toggleVRMode() {
+        const { vrModeBtn } = AppConfig.elements;
+
+        AppConfig.vrMode = !AppConfig.vrMode;
+
+        if (AppConfig.vrMode) {
+            // Activar modo VR
+            document.body.classList.add('vr-mode');
+            vrModeBtn.classList.add('active');
+
+            // Ocultar controles en modo VR
+            this.toggleVRControls(false);
+
+            // Mostrar el segundo contenedor de video y canvas
+            document.querySelectorAll('#videoContainer.right').forEach(el => {
+                el.style.display = 'block';
+            });
+            document.querySelectorAll('#output_canvas2.right').forEach(el => {
+                el.style.display = 'block';
+            });
+
+            // Aplicar estilos específicos para VR
+            this.applyVRModeStyles();
+
+            // Agregar evento para mostrar/ocultar controles al pasar el mouse
+            document.body.addEventListener('mousemove', this.handleMouseMoveInVR);
+        } else {
+            // Desactivar modo VR
+            document.body.classList.remove('vr-mode');
+            vrModeBtn.classList.remove('active');
+
+            // Mostrar controles
+            this.toggleVRControls(true);
+
+            // Eliminar evento de mouse
+            document.body.removeEventListener('mousemove', this.handleMouseMoveInVR);
+
+            // Ocultar el segundo contenedor de video y canvas
+            document.querySelectorAll('#videoContainer.right').forEach(el => {
+                el.style.display = 'none';
+            });
+            document.querySelectorAll('#output_canvas2.right').forEach(el => {
+                el.style.display = 'none';
+            });
+
+            // Restaurar el tamaño/posición original
+            document.querySelectorAll('#videoContainer.left').forEach(el => {
+                el.style.width = '';
+                el.style.left = '';
+            });
+
+            const { canvas } = AppConfig.elements;
+            canvas.style.left = '50%';
+            canvas.style.transform = 'translateX(-50%)';
+        }
+    },
+
+    // Variable para almacenar el temporizador de ocultar controles
+    hideControlsTimer: null,
+
+    /**
+     * Manejador de eventos para el movimiento del mouse en modo VR
+     */
+    handleMouseMoveInVR() {
+        // Si no estamos en modo VR, no hacer nada
+        if (!AppConfig.vrMode) return;
+
+        // Mostrar controles
+        UI.toggleVRControls(true);
+
+        // Limpiar temporizador anterior si existe
+        if (UI.hideControlsTimer) {
+            clearTimeout(UI.hideControlsTimer);
+        }
+
+        // Configurar nuevo temporizador para ocultar controles después de 3 segundos
+        UI.hideControlsTimer = setTimeout(() => {
+            UI.toggleVRControls(false);
+        }, 3000);
+    },    /**
+ * Aplica estilos específicos para el modo VR
+ */
     applyVRModeStyles() {
         const { canvas, canvas2 } = AppConfig.elements;
 
