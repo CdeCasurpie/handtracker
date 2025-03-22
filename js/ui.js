@@ -129,7 +129,6 @@ const UI = {
             this.applyVRModeStyles();
         }
     },
-
     /**
          * Aplica estilos específicos para el modo VR
          */
@@ -163,7 +162,7 @@ const UI = {
      * Alternar modo VR
      */
     toggleVRMode() {
-        const { vrModeBtn, video, video2 } = AppConfig.elements;
+        const { vrModeBtn } = AppConfig.elements;
 
         AppConfig.vrMode = !AppConfig.vrMode;
 
@@ -183,34 +182,8 @@ const UI = {
             // Aplicar estilos específicos para VR
             this.applyVRModeStyles();
 
-            // Asegurarnos de que ambos videos tengan la misma fuente
-            // Usamos un pequeño retraso para asegurar que todo esté listo
-            setTimeout(() => {
-                console.log("Sincronizando video2 en modo VR");
-                if (CameraManager.stream) {
-                    try {
-                        // Clonar el stream para el segundo video
-                        const tracks = CameraManager.stream.getVideoTracks();
-                        if (tracks.length > 0) {
-                            const newStream = new MediaStream([tracks[0].clone()]);
-                            video2.srcObject = newStream;
-                            video2.play().catch(err => console.error('Error reproduciendo video2:', err));
-                            console.log("Video2 configurado con stream clonado");
-                        } else {
-                            console.error("No se encontraron pistas de video en el stream");
-                            video2.srcObject = CameraManager.stream;
-                            video2.play().catch(err => console.error('Error reproduciendo video2:', err));
-                        }
-                    } catch (e) {
-                        console.error("Error al clonar stream:", e);
-                        // Fallback al método directo
-                        video2.srcObject = CameraManager.stream;
-                        video2.play().catch(err => console.error('Error reproduciendo video2:', err));
-                    }
-                } else {
-                    console.warn("No hay stream disponible para video2");
-                }
-            }, 500);
+            // Ya no necesitamos intentar reproducir el video2,
+            // ahora dibujamos frames del video principal en su lugar
         } else {
             // Desactivar modo VR
             document.body.classList.remove('vr-mode');
@@ -223,13 +196,6 @@ const UI = {
             document.querySelectorAll('#output_canvas2.right').forEach(el => {
                 el.style.display = 'none';
             });
-
-            // Detener el video2
-            if (video2.srcObject) {
-                const tracks = video2.srcObject.getTracks();
-                tracks.forEach(track => track.stop());
-                video2.srcObject = null;
-            }
 
             // Restaurar el tamaño/posición original
             document.querySelectorAll('#videoContainer.left').forEach(el => {

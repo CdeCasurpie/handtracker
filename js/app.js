@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Inicializar UI
     UI.init();
     
+    // Inicializar Renderer
+    Renderer.init();
+    
     // Configurar el tamaño del canvas
     UI.setupCanvas();
     

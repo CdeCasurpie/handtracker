@@ -33,6 +33,7 @@ body {
 
 #videoContainer {
     position: relative;
+    overflow: hidden;
     height: 100vh;
     background-color: #000;
     z-index: 1;
@@ -66,6 +67,8 @@ body {
 
 .vr-mode #videoContainer.left {
     position: absolute;
+    overflow: hidden;
+    z-index: 10;
     top: 0;
     left: 0;
     width: 50%;
@@ -74,6 +77,8 @@ body {
 
 .vr-mode #videoContainer.right {
     position: absolute;
+    overflow: hidden;
+    z-index: -1;
     top: 0;
     left: 50%;
     width: 50%;
@@ -89,6 +94,7 @@ body {
 
 .vr-mode #output_canvas {
     left: 25%;
+    z-index: 1000;
     transform: translateX(-50%);
 }
 
@@ -96,6 +102,7 @@ body {
     left: 75%;
     transform: translateX(-50%);
     display: block !important;
+    background-color: black; /* Asegurar fondo negro para el segundo canvas */
 }
 
 .vr-divider {
@@ -121,7 +128,7 @@ body {
     width: 100%;
     display: flex;
     justify-content: center;
-    z-index: 10;
+    z-index: 12;
 }
 
 .top-controls {
@@ -131,7 +138,7 @@ body {
     width: 100%;
     padding: 10px;
     background-color: rgba(0, 0, 0, 0.5);
-    z-index: 10;
+    z-index: 12;
 }
 
 #status {

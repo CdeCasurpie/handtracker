@@ -104,6 +104,23 @@ const HandDetector = {
         // Limpiar ambos canvas
         UI.clearCanvases();
         
+        // En modo VR, primero dibujar el frame de video en el segundo canvas
+        if (AppConfig.vrMode) {
+            try {
+                // Dibujar el video como fondo del segundo canvas
+                Renderer.drawVideoFrame();
+                const { ctx2, canvas2 } = AppConfig.elements;
+                const bgCanvas = Renderer.backgroundCanvas;
+                
+                // Usar el canvas de fondo como imagen de fondo para el segundo canvas
+                if (bgCanvas.width > 0 && bgCanvas.height > 0) {
+                    ctx2.drawImage(bgCanvas, 0, 0, canvas2.width, canvas2.height);
+                }
+            } catch (e) {
+                console.error('Error dibujando frame de video en el segundo canvas:', e);
+            }
+        }
+        
         // Verificar si se detectaron manos
         if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
             UI.updateStatus(`Detectadas ${results.multiHandLandmarks.length} mano(s)`);

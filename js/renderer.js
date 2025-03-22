@@ -3,6 +3,45 @@
  * Encargado de dibujar en el canvas los resultados de la detección
  */
 const Renderer = {
+    // Para modo VR: canvas de fondo para el segundo panel
+    backgroundCanvas: null,
+    backgroundCtx: null,
+    
+    /**
+     * Inicializa recursos adicionales de renderizado
+     */
+    init() {
+        // Crear un canvas oculto para duplicar el video en modo VR
+        this.backgroundCanvas = document.createElement('canvas');
+        this.backgroundCtx = this.backgroundCanvas.getContext('2d');
+        this.backgroundCanvas.style.display = 'none';
+        document.body.appendChild(this.backgroundCanvas);
+    },
+
+    /**
+     * Dibuja el frame actual del video en el canvas de fondo (para modo VR)
+     */
+    drawVideoFrame() {
+        if (!AppConfig.vrMode) return;
+        
+        const { video } = AppConfig.elements;
+        const { backgroundCanvas, backgroundCtx } = this;
+        
+        // Asegurar que el canvas tenga el tamaño del video
+        if (video.videoWidth && video.videoHeight) {
+            if (backgroundCanvas.width !== video.videoWidth) {
+                backgroundCanvas.width = video.videoWidth;
+                backgroundCanvas.height = video.videoHeight;
+            }
+            
+            // Dibujar el frame actual del video en el canvas de fondo
+            try {
+                backgroundCtx.drawImage(video, 0, 0, backgroundCanvas.width, backgroundCanvas.height);
+            } catch (e) {
+                console.error("Error dibujando frame de video:", e);
+            }
+        }
+    },
     /**
      * Dibuja los landmarks de las manos en un canvas específico
      * @param {CanvasRenderingContext2D} context - Contexto del canvas
@@ -123,9 +162,8 @@ const Renderer = {
     drawJoint(context, x, y, radius) {
         context.beginPath();
         context.arc(x, y, radius, 0, 2 * Math.PI);
-        context.strokeStyle = 'white';
-        context.lineWidth = 1;
-        context.stroke();
+        context.fillStyle = 'white';
+        context.fill();
     },
     
     /**
